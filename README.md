@@ -16,3 +16,8 @@ pip install -r requirements.txt --user
 ````
 python EMG_BMI.py 192.168.4.x
 ````
+
+#### Attribution
+This repository uses [super-mario-python](https://github.com/mx0c/super-mario-python). 
+
+This project is brought to you by Garrett, Michael, and Talha. 

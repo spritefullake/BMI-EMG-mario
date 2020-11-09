@@ -10,8 +10,10 @@ import sys
 import os
 import math
 import subprocess
+import statistics
 import time
-from mock_keys import jump, squat, right, left
+import asyncio
+from mock_keys import jump, squat, right, left, clear, down
 #Un-comment this if using OS-X.
 #os.system('defaults write org.python.python ApplePersistenceIgnoreState NO')
 
@@ -25,7 +27,8 @@ FlexWindowSize = 0.25
 data = []
 displayData = [-2 for i in range(WindowSize)]
 flexing = False
-
+time = 0
+command = 0
 # This reads from a socket.
 def data_listener():
   global data
@@ -60,14 +63,6 @@ print('Close Window to exit')
 thread = threading.Thread(target=data_listener)
 thread.daemon = True
 thread.start()
-
-# Run the game in a separate window
-def start_game():
-  subprocess.Popen("python main.py",cwd="./super-mario-python")
-game = threading.Thread(target=start_game)
-game.daemon = True
-game.start()
-
 
 # This is an example for the mocked keyboard events
 # Uncomment this example to see how the mocked keyboard
@@ -128,7 +123,7 @@ main_window.push_handlers(forearm.key_handler)
 
 
 def update(dt):
-  global displayData, data, flexing
+  global displayData, data, flexing, time, command
 
   newData = list(data)
 
@@ -141,7 +136,52 @@ def update(dt):
   #Otherwise, set it to False. 
   #############################
   #ALL OF YOUR CODE SHOULD GO BELOW HERE
+  flexing = False
+  #command = 0 #command 0 = nothing, 1 = right or left press, 2 = jump, 3 = down command, 4 is placeholder 
 
+  scale = 5
+
+  if len(newData) > 2:
+   # print(str(statistics.stdev(newData)))
+    if (statistics.stdev(newData) > 15):
+      time = 0
+      if(command != 2):
+        clear()
+      command = 2 #jump command  
+    #elif (statistics.stdev(newData) > 10):
+     # command = 4
+      #if time > 150: #some threshold to distinguish between walking and trying to press down or go left
+       # command = 3
+    elif (statistics.stdev(newData) > 4):
+      time = 0
+      #print('walk')
+      if(command != 1):
+        clear()
+      command = 1	  
+      
+    else:
+      flexing = False
+      time = time + dt
+      if(time > 2):
+       down(dt)
+       left(dt*scale*5)
+       
+      command = 0 #nothing command
+      #time = 0 #when nothing is happening reset timer  
+   
+  if command == 1:
+    #xright walk
+    right(dt*scale)
+  elif command == 2:
+    #jump
+    jump(dt*scale*7)
+  elif command == 4:
+    down(dt)#command = command * -1 #change to walk left and down input
+  elif command < 0:
+    #left walk
+    left(dt*scale)
+
+  #print(str(command))
   #ALL OF YOUR CODE SHOULD GO ABOVE HERE
 #__/\\\\\\\\\\\\\____/\\\\____________/\\\\__/\\\\\\\\\\\\\\\_______________/\\\\\\\\\\______/\\\\\\\_________/\\\_        
 # _\/\\\/////////\\\_\/\\\\\\________/\\\\\\_\/\\\///////////______________/\\\///////\\\___/\\\/////\\\___/\\\\\\\_       

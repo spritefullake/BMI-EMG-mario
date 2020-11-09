@@ -2,6 +2,9 @@ import pynput
 import time 
 from pynput.keyboard import Key, Controller
 keyboard = Controller()
+import asyncio
+from queue import Queue
+import threading
 
 # Keyboard controls for the mario game
 '''
@@ -9,18 +12,29 @@ This function is written in a functional style.
 press_duration is a function that returns functions!
 This technique is known as currying with higher-order functions
 '''
-def press_duration(duration=0.5):
-  def create_action(key):
-    def action():
-      keyboard.press(key)
-      # have a delay between pressing the key and releasing
-      # so the sprite has time to move a distance
-      time.sleep(duration)
-      keyboard.release(key)
-    return action
-  return create_action
+q = Queue()
 
-create_action = press_duration()
-keys = [Key.up, Key.down, Key.right, Key.left]
+def create_action(key):
+  def action(duration):
+    q.put({'time': duration, 'key': key})
+  return action
+
+def consumer():
+  while True:
+    data = q.get()
+    print(data)
+    keyboard.press(data['key'])
+    time.sleep(data['time'])
+    keyboard.release(data['key'])
+    time.sleep(0.01)	
+
+keypresser = threading.Thread(target=consumer)
+keypresser.daemon = True
+keypresser.start()
+def clear():
+  with q.mutex:
+    q.queue.clear()
+keys = ['x', Key.down, Key.right, Key.left, Key.down]
 # These are the faked-keyboard events
-jump, squat, right, left = map(create_action, keys)
+# alxl of these take durations 
+jump, squat, right, left, down = map(create_action, keys)

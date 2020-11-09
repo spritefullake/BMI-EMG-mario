@@ -22,7 +22,6 @@ def create_action(key):
 def consumer():
   while True:
     data = q.get()
-    print(data)
     keyboard.press(data['key'])
     time.sleep(data['time'])
     keyboard.release(data['key'])
